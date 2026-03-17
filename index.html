@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
   <title>Water Quest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Avenir:wght@400;700&display=swap" rel="stylesheet">
   <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
   <div class="container">
-    <h1>Water Quest</h1>
+    <h1><img src="img/cw_logo.png" alt="charity: water">Water Quest</h1>
     <p class="game-instructions">Collect 20 items to complete the game!</p>
     <div class="stats">
       <p>Cans Collected: <span id="current-cans">0</span></p>
@@ -17,6 +18,11 @@
     <div id="achievements" class="achievement"></div>
     <div class="game-grid"></div>
     <button id="start-game">Start Game</button>
+    <div id="game-message"></div>
+    <div id="leaderboard">
+      <h2>Leaderboard</h2>
+      <ol id="leaderboard-list"></ol>
+    </div>
   </div>
   <script src="script.js"></script>
 </body>
