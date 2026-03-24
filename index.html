@@ -10,7 +10,14 @@
 <body>
   <div class="container">
     <h1><img src="img/cw_logo.png" alt="charity: water">Water Quest</h1>
-    <p class="game-instructions">Collect 20 items to complete the game!</p>
+    <p class="game-instructions" id="game-instructions">Collect 20 items to complete the game!</p>
+
+    <div class="difficulty-options">
+      <label><input type="radio" name="difficulty" value="Easy" checked> Easy</label>
+      <label><input type="radio" name="difficulty" value="Normal"> Normal</label>
+      <label><input type="radio" name="difficulty" value="Hard"> Hard</label>
+    </div>
+
     <div class="stats">
       <p>Cans Collected: <span id="current-cans">0</span></p>
       <p>Time Left: <span id="timer">30</span>s</p>
@@ -24,6 +31,10 @@
       <ol id="leaderboard-list"></ol>
     </div>
   </div>
+  <footer class="site-footer">
+    <p>Support charity: water:</p>
+    <p><a href="https://www.charitywater.org" target="_blank" rel="noreferrer">charitywater.org</a> | <a href="https://www.charitywater.org/donate" target="_blank" rel="noreferrer">Donate Now</a></p>
+  </footer>
   <script src="script.js"></script>
 </body>
 </html>

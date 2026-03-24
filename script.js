@@ -1,10 +1,30 @@
 // Game configuration and state variables
-const GOAL_CANS = 20;        // Total items needed to collect
+const GOAL_CANS = 20;        // Default total items needed to collect
 let currentCans = 0;         // Current number of items collected
 let gameActive = false;      // Tracks if game is currently running
-let spawnInterval;          // Holds the interval for spawning items
-let timerInterval;          // Holds the interval for the timer
-let timeLeft = 30;          // Timer starts at 30 seconds
+let spawnInterval;           // Holds the interval for spawning items
+let timerInterval;           // Holds the interval for the timer
+let timeLeft = 30;           // Timer starts at 30 seconds
+let activeGoalCans = GOAL_CANS;
+let activeSpawnSpeed = 1000;
+
+const DIFFICULTY_SETTINGS = {
+  Easy: { goal: 15, time: 45, spawnRate: 1200 },
+  Normal: { goal: 20, time: 30, spawnRate: 900 },
+  Hard: { goal: 30, time: 20, spawnRate: 700 }
+};
+
+const MILESTONE_MESSAGES = [
+  { score: 10, message: 'Great job! Halfway there!' },
+  { score: 20, message: 'Amazing! You reached 20 cans!' },
+  { score: 30, message: 'Unstoppable! 30 cans collected!' }
+];
+
+let triggeredMilestones = new Set();
+
+function getSelectedDifficulty() {
+  return document.querySelector('input[name="difficulty"]:checked')?.value || 'Normal';
+}
 
 // Random names for leaderboard
 const names = ["WaterCollector", "TankHolder", "CanCarrier", "DropCatcher", "WellFiller", "HydrationHero", "AquaSeeker", "StreamSaver", "RainHarvester", "FlowGuardian", "PureProvider", "ThirstQuencher", "ReservoirRanger", "SpringSupplier", "OasisBuilder"];
@@ -39,6 +59,7 @@ function createGrid() {
 
 // Ensure the grid is created when the page loads
 createGrid();
+updateGoalText();
 displayLeaderboard();
 
 // Updates the score display
@@ -46,9 +67,47 @@ function updateScore() {
   document.getElementById('current-cans').textContent = currentCans;
 }
 
+function showAchievement(message) {
+  const achievementEl = document.getElementById('achievements');
+  achievementEl.textContent = message;
+  achievementEl.style.opacity = '1';
+  setTimeout(() => {
+    achievementEl.style.opacity = '0';
+    setTimeout(() => { achievementEl.textContent = ''; }, 500);
+  }, 2000);
+}
+
+function checkMilestone() {
+  const milestone = MILESTONE_MESSAGES.find(m => m.score === currentCans);
+  if (milestone && !triggeredMilestones.has(milestone.score)) {
+    triggeredMilestones.add(milestone.score);
+    showAchievement(milestone.message);
+  }
+}
+
 // Updates the timer display
 function updateTimer() {
   document.getElementById('timer').textContent = timeLeft;
+  if (gameActive) {
+    updateGoalText();
+  }
+}
+
+// Updates the instruction text with the current difficulty and goal
+function updateGoalText() {
+  const difficulty = getSelectedDifficulty();
+  const settings = DIFFICULTY_SETTINGS[difficulty] || DIFFICULTY_SETTINGS.Normal;
+
+  if (!gameActive) {
+    activeGoalCans = settings.goal;
+    timeLeft = settings.time;
+  }
+
+  const displayGoal = gameActive ? activeGoalCans : settings.goal;
+  const displayTime = gameActive ? timeLeft : settings.time;
+
+  document.getElementById('game-instructions').textContent =
+    `Mode: ${difficulty} — collect ${displayGoal} cans in ${displayTime} seconds!`;
 }
 
 // Spawns a new item in a random grid cell
@@ -73,8 +132,19 @@ function spawnWaterCan() {
   const canWrapper = randomCell.querySelector('.water-can-wrapper');
   canWrapper.addEventListener('click', () => {
     if (!gameActive) return;
+
     currentCans++;
     updateScore();
+    checkMilestone();
+
+    // Remove clicked can immediately (DOM interaction feedback)
+    canWrapper.remove();
+
+    // Add a quick sparkle effect on click
+    const sparkle = document.createElement('span');
+    sparkle.className = 'sparkle';
+    randomCell.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 350);
   });
 }
 
@@ -92,14 +162,29 @@ function startTimer() {
 // Initializes and starts a new game
 function startGame() {
   if (gameActive) return; // Prevent starting a new game if one is already active
+
+  const selected = getSelectedDifficulty();
+  const settings = DIFFICULTY_SETTINGS[selected] || DIFFICULTY_SETTINGS.Normal;
+  activeGoalCans = settings.goal;
+  timeLeft = settings.time;
+  activeSpawnSpeed = settings.spawnRate;
+
   gameActive = true;
   currentCans = 0;
-  timeLeft = 30;
+
   updateScore();
   updateTimer();
+  updateGoalText();
   document.getElementById('game-message').textContent = '';
   createGrid(); // Set up the game grid
-  spawnInterval = setInterval(spawnWaterCan, 1000); // Spawn water cans every second
+
+  clearInterval(spawnInterval);
+  clearInterval(timerInterval);
+
+  triggeredMilestones.clear();
+  document.getElementById('achievements').textContent = '';
+
+  spawnInterval = setInterval(spawnWaterCan, activeSpawnSpeed);
   startTimer();
 }
 
@@ -111,7 +196,7 @@ function endGame() {
 
   // Determine win or lose
   let message;
-  const isWin = currentCans >= GOAL_CANS;
+  const isWin = currentCans >= activeGoalCans;
   if (isWin) {
     message = winningMessages[Math.floor(Math.random() * winningMessages.length)];
     showWaterEffect();
@@ -161,6 +246,10 @@ function displayLeaderboard() {
     list.appendChild(li);
   });
 }
+
+// Set up difficulty change handler
+const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+difficultyRadios.forEach(radio => radio.addEventListener('change', updateGoalText));
 
 // Set up click handler for the start button
 document.getElementById('start-game').addEventListener('click', startGame);
